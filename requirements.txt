@@ -1,0 +1,7 @@
+click==8.3.0
+colorama==0.4.6
+joblib==1.5.2
+lxml==6.0.2
+nltk==3.9.2
+regex==2025.9.18
+tqdm==4.67.1
