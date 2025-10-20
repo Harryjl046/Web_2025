@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 from collections import defaultdict
+import tqdm as tqdm
 
 def build_skip_pointers(posting_list):
     n = len(posting_list)
@@ -19,15 +20,15 @@ def build_skip_pointers(posting_list):
     return skips
 
 # 设置路径
-BASE_DIR = Path(__file__).resolve().parents[1]
-tokenized_dir = BASE_DIR / "tokenized"
-output_path = BASE_DIR /  "inverted_index.json"
+BASE_DIR = Path(__file__).resolve().parents[2]
+tokenized_dir = BASE_DIR / "Lab1/tokenized"
+output_path = BASE_DIR /  "Lab1/inverted_index.json"
 
 # 倒排表字典，键为词项，值为包含该词的文档集合
 inverted_index = defaultdict(set)
 
 # 遍历分词后的文件
-for filename in os.listdir(tokenized_dir):
+for filename in tqdm.tqdm(os.listdir(tokenized_dir), desc="Processing files", ncols=80):
     if filename.endswith(".txt"):
         file_path = os.path.join(tokenized_dir, filename)
         with open(file_path, "r", encoding="utf-8") as f:
@@ -36,7 +37,7 @@ for filename in os.listdir(tokenized_dir):
                 inverted_index[w].add(filename)
 
 index_with_skips = {}
-for term, docs in inverted_index.items():
+for term, docs in tqdm.tqdm(inverted_index.items(), desc="Building skip pointers", ncols=80):
     sorted_docs = sorted(docs)  # 保证有序
     skips = build_skip_pointers(sorted_docs)
     index_with_skips[term] = {
