@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-input_folder = BASE_DIR / "test"
+input_folder = BASE_DIR / "All_Unpack"
 output_folder = BASE_DIR / "descriptions"
 os.makedirs(output_folder, exist_ok=True)
 

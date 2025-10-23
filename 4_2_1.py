@@ -63,10 +63,10 @@ def front_coding_decode(path, block_size=4):
         result.append((term, offset, length))
     return result
 #前端编码的示例代码
-# BASE_DIR = Path(__file__).resolve().parents[1]
-# dictionary_path = BASE_DIR /  "dictionary.json"
-# frontedcoded_path = BASE_DIR /  "dictionary_frontcoded.bin"
+BASE_DIR = Path(__file__).resolve().parents[1]
+dictionary_path = BASE_DIR /  "dictionary.json"
+frontedcoded_path = BASE_DIR /  "dictionary_frontcoded.bin"
 
-# front_coding_binary(dictionary_path,frontedcoded_path, block_size=4)
-# result=front_coding_decode(frontedcoded_path, block_size=4)
-# print(result[:3])
+front_coding_binary(dictionary_path,frontedcoded_path, block_size=4)
+result=front_coding_decode(frontedcoded_path, block_size=4)
+print(result[:3])
