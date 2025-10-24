@@ -70,3 +70,4 @@ frontedcoded_path = BASE_DIR /  "dictionary_frontcoded.bin"
 front_coding_binary(dictionary_path,frontedcoded_path, block_size=4)
 result=front_coding_decode(frontedcoded_path, block_size=4)
 print(result[:3])
+
