@@ -34,8 +34,6 @@ for filename in tqdm(xml_files,desc="提取进度",unit="file"):
 
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(output_text)
-        # tqdm 内建议用 postfix 或 logging，不直接 print，以防打断进度条
-        # tqdm.write(f"✅ 提取成功: {filename} → {output_name}" if description_texts else f"⚠️ 未找到 Description 标签: {filename}")
 
     except Exception as e:
         tqdm.write(f"解析失败: {filename} ({e})")

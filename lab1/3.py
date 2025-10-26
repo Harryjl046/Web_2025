@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import Path
+from tqdm import tqdm
 from collections import defaultdict
 from tqdm import tqdm
 
@@ -22,17 +23,17 @@ def build_skip_pointers(posting_list):
 def build_inverted_index(tokenized_dir):
     """构建倒排表的函数"""
     inverted_index = defaultdict(lambda: defaultdict(list))
-
-    for filename in tqdm(os.listdir(tokenized_dir), desc="构建倒排表", unit="file"):
-        if filename.endswith(".txt"):
-            file_path = tokenized_dir / filename
-            with open(file_path, "r", encoding="utf-8") as f:
-                words = f.read().split()
-                for pos,w in enumerate(words):  
-                    inverted_index[w][filename].append(pos)
-
+    files=[f for f in os.listdir(tokenized_dir) if f.endswith(".txt")]
+    print("正在读取文件...")
+    for filename in tqdm(files,desc="处理文件",unit="file"):        
+        file_path = tokenized_dir / filename
+        with open(file_path, "r", encoding="utf-8") as f:
+            words = f.read().split()
+            for pos,w in enumerate(words):  
+                inverted_index[w][filename].append(pos)
+    print("正在生成倒排表...")
     index_with_skips = {}
-    for term, doc_dict  in tqdm(inverted_index.items(), desc="构建跳表", unit="term"):
+    for term, doc_dict  in tqdm(inverted_index.items(),desc="生成倒排表",unit="term"):
         sorted_docs = sorted(doc_dict.keys())  # 保证有序
         skips = build_skip_pointers(sorted_docs)
         index_with_skips[term] = {
@@ -41,7 +42,9 @@ def build_inverted_index(tokenized_dir):
             ],
             "skips": skips
         }
-    return index_with_skips
+    print("正在排序...")
+    sorted_inverted_index = {term: index_with_skips[term] for term in sorted(index_with_skips.keys())}
+    return sorted_inverted_index
 
 def build_dictionary(inverted_index_path,dictionary_path):
     """根据倒排表文件生成词典"""
