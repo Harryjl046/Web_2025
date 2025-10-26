@@ -31,16 +31,21 @@ NLTK_DIR.mkdir(parents=True, exist_ok=True)     #这是我自定义的nltk数据
 #我自定义了下载地址所以需要重新加载地址,如果使用默认下载地址则不需要
 nltk.data.path.append(str(NLTK_DIR)) 
 
-# 如果是第一次使用，需要先下载一次资源，取消掉下面两行的注释
-#nltk.download('stopwords', download_dir=str(NLTK_DIR))
-#nltk.download('punkt', download_dir=str(NLTK_DIR))
+# 如果是第一次使用，需要先下载一次资源，取消掉下面的注释
+'''
+nltk.download('stopwords', download_dir=str(NLTK_DIR))
+nltk.download('punkt', download_dir=str(NLTK_DIR))
+nltk.download('averaged_perceptron_tagger_eng', download_dir=str(NLTK_DIR))
+nltk.download('wordnet', download_dir=str(NLTK_DIR))
+'''
 
-# 写入自定义停用词
+'''
+写入自定义停用词文件路径，my_stopwords.txt文件放在了lab1目录下
+需要自己修改文件my_stopwords.txt的位置，还有下面的my_stopwords.txt的路径
+最后能用就行😁
+'''
 nltk_my_stopwords = BASE_DIR/"Lab1/nltk_dir/my_stopwords.txt"
-customed_stopwords = {"br"}
-with open(nltk_my_stopwords, "w", encoding="utf-8", newline="") as f:
-    for word in customed_stopwords:
-        f.write(word + "\n")
+
 
 with open(nltk_my_stopwords, "r", encoding="utf-8") as f:
     custom_stopwords = {line.strip() for line in f if line.strip()}

@@ -3,7 +3,6 @@ import json
 from pathlib import Path
 from tqdm import tqdm
 from collections import defaultdict
-from tqdm import tqdm
 
 def build_skip_pointers(posting_list):
     n = len(posting_list)
@@ -25,7 +24,7 @@ def build_inverted_index(tokenized_dir):
     inverted_index = defaultdict(lambda: defaultdict(list))
     files=[f for f in os.listdir(tokenized_dir) if f.endswith(".txt")]
     print("正在读取文件...")
-    for filename in tqdm(files,desc="处理文件",unit="file"):        
+    for filename in tqdm(files,desc="处理文件",unit="file", ncols=80):        
         file_path = tokenized_dir / filename
         with open(file_path, "r", encoding="utf-8") as f:
             words = f.read().split()
@@ -33,7 +32,7 @@ def build_inverted_index(tokenized_dir):
                 inverted_index[w][filename].append(pos)
     print("正在生成倒排表...")
     index_with_skips = {}
-    for term, doc_dict  in tqdm(inverted_index.items(),desc="生成倒排表",unit="term"):
+    for term, doc_dict  in tqdm(inverted_index.items(),desc="生成倒排表",unit="term",ncols=80):
         sorted_docs = sorted(doc_dict.keys())  # 保证有序
         skips = build_skip_pointers(sorted_docs)
         index_with_skips[term] = {
@@ -43,7 +42,9 @@ def build_inverted_index(tokenized_dir):
             "skips": skips
         }
     print("正在排序...")
-    sorted_inverted_index = {term: index_with_skips[term] for term in sorted(index_with_skips.keys())}
+    sorted_inverted_index = {}
+    for term in tqdm(sorted(index_with_skips.keys()), desc="排序词项", unit="term", ncols=80):
+        sorted_inverted_index[term] = index_with_skips[term]
     return sorted_inverted_index
 
 def build_dictionary(inverted_index_path,dictionary_path):
@@ -55,7 +56,7 @@ def build_dictionary(inverted_index_path,dictionary_path):
     dictionary = {}
     offset = 0
 
-    for term in tqdm(sorted_terms, desc="构建词典", unit="term"):
+    for term in tqdm(sorted_terms, desc="构建词典", unit="term", ncols=80):
         posting_data = inverted_index[term]
         posting_str = json.dumps(posting_data, ensure_ascii=False)
         posting_bytes = posting_str.encode('utf-8')
