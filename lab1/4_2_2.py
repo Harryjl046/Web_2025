@@ -98,9 +98,9 @@ def blocking_decompressed(block_path):
 
 if __name__=="__main__":
 
-    BASE_DIR = Path(__file__).resolve().parents[1]
-    dictionary_path = BASE_DIR /  "dictionary.json"
-    block_path = BASE_DIR /  "dictionary_blocking.bin"
+    BASE_DIR = Path(__file__).resolve().parents[2]
+    dictionary_path = BASE_DIR /  "Lab1/dictionary.json"
+    block_path = BASE_DIR /  "Lab1/dictionary_blocking.bin"
 
     blocking_compressed(dictionary_path,block_path)
     blocking_decompressed(block_path)

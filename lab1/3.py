@@ -2,7 +2,7 @@ import os
 import json
 from pathlib import Path
 from collections import defaultdict
-import tqdm as tqdm
+from tqdm import tqdm
 
 def build_skip_pointers(posting_list):
     n = len(posting_list)
@@ -23,7 +23,7 @@ def build_inverted_index(tokenized_dir):
     """构建倒排表的函数"""
     inverted_index = defaultdict(lambda: defaultdict(list))
 
-    for filename in os.listdir(tokenized_dir):
+    for filename in tqdm(os.listdir(tokenized_dir), desc="构建倒排表", unit="file"):
         if filename.endswith(".txt"):
             file_path = tokenized_dir / filename
             with open(file_path, "r", encoding="utf-8") as f:
@@ -32,7 +32,7 @@ def build_inverted_index(tokenized_dir):
                     inverted_index[w][filename].append(pos)
 
     index_with_skips = {}
-    for term, doc_dict  in inverted_index.items():
+    for term, doc_dict  in tqdm(inverted_index.items(), desc="构建跳表", unit="term"):
         sorted_docs = sorted(doc_dict.keys())  # 保证有序
         skips = build_skip_pointers(sorted_docs)
         index_with_skips[term] = {
@@ -52,7 +52,7 @@ def build_dictionary(inverted_index_path,dictionary_path):
     dictionary = {}
     offset = 0
 
-    for term in sorted_terms:
+    for term in tqdm(sorted_terms, desc="构建词典", unit="term"):
         posting_data = inverted_index[term]
         posting_str = json.dumps(posting_data, ensure_ascii=False)
         posting_bytes = posting_str.encode('utf-8')
@@ -72,10 +72,10 @@ def build_dictionary(inverted_index_path,dictionary_path):
 
 if __name__ == "__main__":
 
-    BASE_DIR = Path(__file__).resolve().parents[1]
-    tokenized_dir = BASE_DIR / "tokenized"
-    inverted_index_path = BASE_DIR /  "inverted_index.json"
-    dictionary_path = BASE_DIR /  "dictionary.json"
+    BASE_DIR = Path(__file__).resolve().parents[2]
+    tokenized_dir = BASE_DIR / "Lab1/tokenized"
+    inverted_index_path = BASE_DIR /  "Lab1/inverted_index.json"
+    dictionary_path = BASE_DIR /  "Lab1/dictionary.json"
 
     print("正在构建倒排表...")
     inverted_index=build_inverted_index(tokenized_dir)
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     with open(inverted_index_path, "w", encoding="utf-8") as f:
         json.dump(inverted_index, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ 倒排表已生成，共 {len(inverted_index)} 个词项")
+    print(f"✅  倒排表已生成，共 {len(inverted_index)} 个词项")
     print(f"📄 保存路径：{inverted_index_path}")
 
     build_dictionary(inverted_index_path,dictionary_path)
