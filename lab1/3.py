@@ -4,9 +4,12 @@ from pathlib import Path
 from tqdm import tqdm
 from collections import defaultdict
 
-def build_skip_pointers(posting_list):
+def build_skip_pointers(posting_list,step_size):
     n = len(posting_list)
-    skip_interval = int(n ** 0.5)
+    if(step_size==0):
+        skip_interval = int(n ** 0.5)
+    else:
+        skip_interval=step_size
     skips = []
     if skip_interval > 1:
         for i in range(0, n, skip_interval):
@@ -19,8 +22,8 @@ def build_skip_pointers(posting_list):
                 })
     return skips
 
-def build_inverted_index(tokenized_dir):
-    """构建倒排表的函数"""
+def build_inverted_index(tokenized_dir,step_size=0):
+    """构建倒排表的函数,step_size为跳跃指针的步长,如果为0则使用sqrt(n)"""
     inverted_index = defaultdict(lambda: defaultdict(list))
     files=[f for f in os.listdir(tokenized_dir) if f.endswith(".txt")]
     print("正在读取文件...")
@@ -34,7 +37,7 @@ def build_inverted_index(tokenized_dir):
     index_with_skips = {}
     for term, doc_dict  in tqdm(inverted_index.items(),desc="生成倒排表",unit="term",ncols=80):
         sorted_docs = sorted(doc_dict.keys())  # 保证有序
-        skips = build_skip_pointers(sorted_docs)
+        skips = build_skip_pointers(sorted_docs,step_size=step_size)
         index_with_skips[term] = {
             "postings": [
                 {"doc":doc,"positions":doc_dict[doc]}for doc in sorted_docs
@@ -82,7 +85,7 @@ if __name__ == "__main__":
     dictionary_path = BASE_DIR /  "Lab1/dictionary.json"
 
     print("正在构建倒排表...")
-    inverted_index=build_inverted_index(tokenized_dir)
+    inverted_index=build_inverted_index(tokenized_dir,5)
 
     with open(inverted_index_path, "w", encoding="utf-8") as f:
         json.dump(inverted_index, f, indent=2, ensure_ascii=False)
