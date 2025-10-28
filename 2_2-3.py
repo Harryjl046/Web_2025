@@ -26,6 +26,8 @@ def get_wordnet_pos(treebank_tag):
 # 如果是第一次使用，需要先下载一次资源
 # nltk.download('punkt')
 # nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger_eng', download_dir='D:/web_experiment/web_2025/nltk_dir')
+nltk.download('wordnet', download_dir='D:/web_experiment/web_2025/nltk_dir')
 
 #我自定义了下载地址所以需要重新加载地址,如果使用默认下载地址则不需要
 nltk.data.path.append("D:/web_experiment/web_2025/nltk_dir")
