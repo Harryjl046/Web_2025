@@ -4,8 +4,8 @@ from pathlib import Path
 from tqdm import tqdm
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-input_folder = BASE_DIR / "Lab1/Meetup/All_Unpack"
-output_folder = BASE_DIR / "Lab1/descriptions"
+input_folder = BASE_DIR / "WEB_2025/lab1/Meetup/All_Unpack"
+output_folder = BASE_DIR / "WEB_2025/lab1/descriptions"
 os.makedirs(output_folder, exist_ok=True)
 
 print(f"📂 输入目录: {input_folder}")

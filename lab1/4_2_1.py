@@ -64,8 +64,8 @@ def front_coding_decode(path, block_size=4):
     return result
 #前端编码的示例代码
 BASE_DIR = Path(__file__).resolve().parents[2]
-dictionary_path = BASE_DIR /  "Lab1/dictionary.json"
-frontedcoded_path = BASE_DIR /  "Lab1/dictionary_frontcoded.bin"
+dictionary_path = BASE_DIR /  "WEB_2025/lab1/dictionary.json"
+frontedcoded_path = BASE_DIR /  "WEB_2025/lab1/dictionary_frontcoded.bin"
 
 front_coding_binary(dictionary_path,frontedcoded_path, block_size=4)
 result=front_coding_decode(frontedcoded_path, block_size=4)

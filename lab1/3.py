@@ -80,9 +80,9 @@ def build_dictionary(inverted_index_path,dictionary_path):
 if __name__ == "__main__":
 
     BASE_DIR = Path(__file__).resolve().parents[2]
-    tokenized_dir = BASE_DIR / "Lab1/tokenized"
-    inverted_index_path = BASE_DIR /  "Lab1/inverted_index.json"
-    dictionary_path = BASE_DIR /  "Lab1/dictionary.json"
+    tokenized_dir = BASE_DIR / "WEB_2025/lab1/tokenized"
+    inverted_index_path = BASE_DIR /  "WEB_2025/lab1/inverted_index.json"
+    dictionary_path = BASE_DIR /  "WEB_2025/lab1/dictionary.json"
 
     print("正在构建倒排表...")
     inverted_index=build_inverted_index(tokenized_dir,5)

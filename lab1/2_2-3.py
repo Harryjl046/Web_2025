@@ -23,10 +23,10 @@ def get_wordnet_pos(treebank_tag):
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-input_folder = BASE_DIR / "Lab1/descriptions"
-output_folder = BASE_DIR / "Lab1/tokenized"
+input_folder = BASE_DIR / "WEB_2025/lab1/descriptions"
+output_folder = BASE_DIR / "WEB_2025/lab1/tokenized"
 os.makedirs(output_folder, exist_ok=True)
-NLTK_DIR = BASE_DIR / "Lab1/nltk_dir"
+NLTK_DIR = BASE_DIR / "WEB_2025/lab1/nltk_dir"
 NLTK_DIR.mkdir(parents=True, exist_ok=True)     #这是我自定义的nltk数据存放路径
 #我自定义了下载地址所以需要重新加载地址,如果使用默认下载地址则不需要
 nltk.data.path.append(str(NLTK_DIR)) 
@@ -44,7 +44,7 @@ nltk.download('wordnet', download_dir=str(NLTK_DIR))
 需要自己修改文件my_stopwords.txt的位置，还有下面的my_stopwords.txt的路径
 最后能用就行😁
 '''
-nltk_my_stopwords = BASE_DIR/"Lab1/nltk_dir/my_stopwords.txt"
+nltk_my_stopwords = BASE_DIR/"WEB_2025/lab1/nltk_dir/my_stopwords.txt"
 
 
 with open(nltk_my_stopwords, "r", encoding="utf-8") as f:
