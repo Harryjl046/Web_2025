@@ -42,9 +42,9 @@ nltk.download('wordnet', download_dir=str(NLTK_DIR))
 '''
 写入自定义停用词文件路径，my_stopwords.txt文件放在了lab1目录下
 需要自己修改文件my_stopwords.txt的位置，还有下面的my_stopwords.txt的路径
-最后能用就行😁
+最后能用就行
 '''
-nltk_my_stopwords = BASE_DIR/"WEB_2025/lab1/nltk_dir/my_stopwords.txt"
+nltk_my_stopwords = Path(__file__).resolve().parent / "my_stopwords.txt"
 
 
 with open(nltk_my_stopwords, "r", encoding="utf-8") as f:
