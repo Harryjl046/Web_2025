@@ -209,3 +209,6 @@ __marimo__/
 #  generated files
 /lab1/*.json
 /lab1/*.bin
+
+# Lab2 files
+/lab2/freebase_*.gz
