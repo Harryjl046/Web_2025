@@ -211,4 +211,5 @@ __marimo__/
 /lab1/*.bin
 
 # Lab2 files
-/lab2/freebase_*.gz
+/lab2/data/
+/lab2/trained_model/

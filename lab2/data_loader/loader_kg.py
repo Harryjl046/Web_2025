@@ -94,7 +94,7 @@ class DataLoaderBase(object):
         - 直到采满 n_sample_neg_triples 个负 tail（负样本） 为止。返回
         """
         # 当前 head 在图中的所有正例 (tail, relation) 对
-        pos_triples =
+        pos_triples = kg_dict[head]
 
         # 用于存放采样到的负 tail
         sample_neg_tails = []
@@ -104,10 +104,11 @@ class DataLoaderBase(object):
                 break
 
             # 在 [0, highest_neg_idx) 范围内随机采样一个 tail 作为负样本候选
-            tail =
+            tail = np.random.randint(low=0, high=highest_neg_idx)
 
             # 仅当 (tail, relation) 不是正例，且 tail 尚未被采样过时，将其加入 sample_neg_tails
-            if
+            if (tail, relation) not in pos_triples and tail not in sample_neg_tails:
+                sample_neg_tails.append(tail)
 
         return sample_neg_tails
 

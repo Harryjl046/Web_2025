@@ -23,15 +23,15 @@ class Embedding_based(nn.Module):
 
         self.kg_l2loss_lambda = args.kg_l2loss_lambda
         
-        self.n_entities = 
-        self.n_relations = 
+        self.n_entities = n_entities
+        self.n_relations = n_relations
 
-        self.embed_dim =           # 实体向量维度
-        self.relation_dim =        # 关系向量维度
+        self.embed_dim = args.embed_dim       # 实体向量维度
+        self.relation_dim = args.relation_dim        # 关系向量维度
 
         # ---- KG embeddings ----
-        self.entity_embed = 
-        self.relation_embed = 
+        self.entity_embed = nn.Embedding(self.n_entities, self.embed_dim)
+        self.relation_embed = nn.Embedding(self.n_relations, self.relation_dim)
         nn.init.xavier_uniform_(self.entity_embed.weight)
         nn.init.xavier_uniform_(self.relation_embed.weight)
 
@@ -56,30 +56,30 @@ class Embedding_based(nn.Module):
         pos_t:  LongTensor，形状 (B,) —— 正尾实体索引
         neg_t:  LongTensor，形状 (B,) —— 负尾实体索引
         """
-        r_embed =                         # (B, relation_dim)
-        W_r =                             # (B, embed_dim, relation_dim)
+        r_embed = self.relation_embed(r)                   # (B, relation_dim)
+        W_r = self.trans_M[r]                             # (B, embed_dim, relation_dim)
   
-        h_embed =                         # (B, embed_dim)
-        pos_t_embed =                     # (B, embed_dim)
-        neg_t_embed =                     # (B, embed_dim)
+        h_embed = self.entity_embed(h)                     # (B, embed_dim)
+        pos_t_embed = self.entity_embed(pos_t)                     # (B, embed_dim)
+        neg_t_embed = self.entity_embed(neg_t)                     # (B, embed_dim)
 
         # 1. 投影到关系空间
-        r_mul_h =                         # (B, relation_dim)
-        r_mul_pos_t =                     # (B, relation_dim)
-        r_mul_neg_t =                     # (B, relation_dim)
+        r_mul_h = torch.bmm(h_embed.unsqueeze(1), W_r).squeeze(1)                       # (B, relation_dim)
+        r_mul_pos_t = torch.bmm(pos_t_embed.unsqueeze(1), W_r).squeeze(1)                     # (B, relation_dim)
+        r_mul_neg_t = torch.bmm(neg_t_embed.unsqueeze(1), W_r).squeeze(1)                     # (B, relation_dim)
  
         # 2. L2 归一化
-        r_embed = 
-        r_mul_h = 
-        r_mul_pos_t = 
-        r_mul_neg_t = 
+        r_embed = torch.nn.functional.normalize(r_embed, p=2, dim=1)
+        r_mul_h = torch.nn.functional.normalize(r_mul_h, p=2, dim=1)
+        r_mul_pos_t = torch.nn.functional.normalize(r_mul_pos_t, p=2, dim=1)
+        r_mul_neg_t = torch.nn.functional.normalize(r_mul_neg_t, p=2, dim=1)
 
         # 3. 得分
-        pos_score =                       # (B,)
-        neg_score =                       # (B,)
+        pos_score = torch.sum(r_mul_h * r_mul_pos_t, dim=1)                     # (B, 1)
+        neg_score = torch.sum(r_mul_h * r_mul_neg_t, dim=1)                     # (B, 1)
 
         # 4. BPR 风格的 pairwise loss
-        kg_loss =                         # 基于pos_score，neg_score，补全BPR loss
+        kg_loss = F.softplus(pos_score - neg_score)              # 基于pos_score，neg_score，补全BPR loss
         kg_loss = torch.mean(kg_loss)
 
         l2_loss = (
@@ -106,24 +106,24 @@ class Embedding_based(nn.Module):
         """
 
         # 1. 取出关系嵌入 r_embed 以及对应的投影矩阵 W_r
-        r_embed =                         # (B, relation_dim)
-        W_r =                             # (B, embed_dim, relation_dim)
+        r_embed = self.relation_embed(r)                   # (B, relation_dim)
+        W_r = self.trans_M[r]                             # (B, embed_dim, relation_dim)
 
         # 2. 取出头实体和尾实体的嵌入向量 h_embed, t_embed
-        h_embed =                         # (B, embed_dim)
-        t_embed =                         # (B, embed_dim)
+        h_embed = self.entity_embed(h)                     # (B, embed_dim)
+        t_embed = self.entity_embed(t)                     # (B, embed_dim)
 
         # 3. 将实体嵌入映射到关系空间：
-        r_mul_h =                         # (B, relation_dim)
-        r_mul_t =                         # (B, relation_dim)
+        r_mul_h = torch.bmm(h_embed.unsqueeze(1), W_r).squeeze(1)           # (B, relation_dim)
+        r_mul_t = torch.bmm(t_embed.unsqueeze(1), W_r).squeeze(1)           # (B, relation_dim)
 
         # 4. 对 r_embed, r_mul_h, r_mul_t 进行 L2 归一化（按行）
-        r_embed = 
-        r_mul_h = 
-        r_mul_t = 
+        r_embed = torch.nn.functional.normalize(r_embed, p=2, dim=1)
+        r_mul_h = torch.nn.functional.normalize(r_mul_h, p=2, dim=1)
+        r_mul_t = torch.nn.functional.normalize(r_mul_t, p=2, dim=1)
 
         # 5. 根据 TransR 的打分函数计算距离：
-        score =                           # (B,)
+        score = torch.norm(r_mul_h + r_embed - r_mul_t, p=2, dim=1)         # (B,)
 
         return score
 
@@ -141,24 +141,24 @@ class Embedding_based(nn.Module):
         neg_t:  (kg_batch_size)
         注意：为保证 (h + r - t) 可加减，一般需设 relation_dim == embed_dim。
         """
-        r_embed =                          # (B, relation_dim)
+        r_embed = self.relation_embed(r)                   # (B, relation_dim)
 
-        h_embed =                          # (B, embed_dim)
-        pos_t_embed =                      # (B, embed_dim)
-        neg_t_embed =                      # (B, embed_dim)
+        h_embed = self.entity_embed(h)                     # (B, embed_dim)
+        pos_t_embed = self.entity_embed(pos_t)                     # (B, embed_dim)
+        neg_t_embed = self.entity_embed(neg_t)                     # (B, embed_dim)
 
         # 归一化
-        r_embed = 
-        h_embed =
-        pos_t_embed =
-        neg_t_embed =
+        r_embed = torch.nn.functional.normalize(r_embed, p=2, dim=1)
+        h_embed = torch.nn.functional.normalize(h_embed, p=2, dim=1)
+        pos_t_embed = torch.nn.functional.normalize(pos_t_embed, p=2, dim=1)
+        neg_t_embed = torch.nn.functional.normalize(neg_t_embed, p=2, dim=1)
 
         # 得分
-        pos_score =                        # (B,)
-        neg_score =                        # (B,)
+        pos_score = torch.norm(h_embed + r_embed - pos_t_embed, p=2, dim=1)                   # (B, 1)
+        neg_score = torch.norm(h_embed + r_embed - neg_t_embed, p=2, dim=1)                   # (B, 1)
 
         # BPR 风格 pairwise loss
-        kg_loss =
+        kg_loss = F.softplus(pos_score - neg_score)              # 基于pos_score，neg_score，补全BPR loss
         kg_loss = torch.mean(kg_loss)
 
         l2_loss = (
@@ -183,17 +183,17 @@ class Embedding_based(nn.Module):
         """
 
         # 根据索引取对应的嵌入向量
-        r_embed = 
-        h_embed =
-        t_embed =
+        r_embed = self.relation_embed(r)                   # (batch_size, relation_dim)
+        h_embed = self.entity_embed(h)                     # (batch_size, embed_dim)
+        t_embed = self.entity_embed(t)                     # (batch_size, embed_dim)
 
         # 对嵌入进行归一化（按行进行 L2 归一化）
-        r_embed = 
-        h_embed =
-        t_embed =        
+        r_embed = torch.nn.functional.normalize(r_embed, p=2, dim=1)
+        h_embed = torch.nn.functional.normalize(h_embed, p=2, dim=1)
+        t_embed = torch.nn.functional.normalize(t_embed, p=2, dim=1)        
 
         # 根据 TransE 的距离函数计算得分：|| h + r - t ||_2
-        score = 
+        score = torch.norm(h_embed + r_embed - t_embed, p=2, dim=1)                   # (B, 1)
 
         return score
 

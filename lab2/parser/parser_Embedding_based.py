@@ -56,7 +56,7 @@ def parse_args():
     args = parser.parse_args()
 
     save_dir = 'trained_model/{}/link_prediction/dime{}dimr{}_lr{}_l2{}_{}/'.format(
-        args.data_name, args.embed_dim, args.relation_dim, args.lr, args.cf_l2loss_lambda, args.KG_embedding_type)
+        args.data_name, args.embed_dim, args.relation_dim, args.lr, args.kg_l2loss_lambda, args.KG_embedding_type)
     args.save_dir = save_dir
 
     return args
