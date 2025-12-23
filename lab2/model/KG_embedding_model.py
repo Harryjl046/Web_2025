@@ -60,8 +60,13 @@ class Embedding_based(nn.Module):
         W_r = self.trans_M[r]                             # (B, embed_dim, relation_dim)
   
         h_embed = self.entity_embed(h)                     # (B, embed_dim)
-        pos_t_embed = self.entity_embed(pos_t)                     # (B, embed_dim)
-        neg_t_embed = self.entity_embed(neg_t)                     # (B, embed_dim)
+        pos_t_embed = self.entity_embed(pos_t)                     # (B, embed_dim)                     
+        neg_t_embed = self.entity_embed(neg_t)              # (B, embed_dim)
+
+        # normalize 原始实体嵌入(添加)
+        h_embed = F.normalize(h_embed, p=2, dim=1)
+        pos_t_embed = F.normalize(pos_t_embed, p=2, dim=1)
+        neg_t_embed = F.normalize(neg_t_embed, p=2, dim=1)
 
         # 1. 投影到关系空间
         r_mul_h = torch.bmm(h_embed.unsqueeze(1), W_r).squeeze(1)                       # (B, relation_dim)
@@ -70,23 +75,58 @@ class Embedding_based(nn.Module):
  
         # 2. L2 归一化
         r_embed = torch.nn.functional.normalize(r_embed, p=2, dim=1)
-        r_mul_h = torch.nn.functional.normalize(r_mul_h, p=2, dim=1)
-        r_mul_pos_t = torch.nn.functional.normalize(r_mul_pos_t, p=2, dim=1)
-        r_mul_neg_t = torch.nn.functional.normalize(r_mul_neg_t, p=2, dim=1)
+        # r_mul_h = torch.nn.functional.normalize(r_mul_h, p=2, dim=1)
+        # r_mul_pos_t = torch.nn.functional.normalize(r_mul_pos_t, p=2, dim=1)
+        # r_mul_neg_t = torch.nn.functional.normalize(r_mul_neg_t, p=2, dim=1)
+
+        # # =========================
+        # # Batch Hard Negative Mining(添加)
+        # # =========================
+
+        # # z = h_r + r
+        # z = r_mul_h + r_embed                    # (B, relation_dim)
+
+        # # 所有 batch 内正尾实体作为候选负样本
+        # # r_mul_pos_t: (B, relation_dim)
+
+        # # 距离矩阵 (B, B)
+        # dist = torch.cdist(z, r_mul_pos_t, p=2)
+
+        # # 排除自身正样本
+        # dist.fill_diagonal_(float('inf'))
+
+        # # 选最难负样本
+        # hard_idx = dist.argmin(dim=1)
+
+        # # 得到 hard negative
+        # r_mul_neg_t = r_mul_pos_t[hard_idx]     # (B, relation_dim)
+
 
         # 3. 得分
-        pos_score = torch.sum(r_mul_h * r_mul_pos_t, dim=1)                     # (B, 1)
-        neg_score = torch.sum(r_mul_h * r_mul_neg_t, dim=1)                     # (B, 1)
+        pos_score = torch.sum(torch.pow(r_mul_h + r_embed - r_mul_pos_t, 2), dim=1)                     # (B, 1)
+        neg_score = torch.sum(torch.pow(r_mul_h + r_embed - r_mul_neg_t, 2), dim=1)                     # (B, 1)
 
         # 4. BPR 风格的 pairwise loss
         kg_loss = F.softplus(pos_score - neg_score)              # 基于pos_score，neg_score，补全BPR loss
         kg_loss = torch.mean(kg_loss)
 
+        # margin = 1.0
+        # kg_loss = F.relu(margin + pos_score - neg_score)
+        # kg_loss = kg_loss.mean()
+
+
+        # l2_loss = (
+        #     _L2_loss_mean(r_mul_h)
+        #     + _L2_loss_mean(r_embed)
+        #     + _L2_loss_mean(r_mul_pos_t)
+        #     + _L2_loss_mean(r_mul_neg_t)
+        # )
+
         l2_loss = (
-            _L2_loss_mean(r_mul_h)
+            _L2_loss_mean(h_embed)
+            + _L2_loss_mean(pos_t_embed)
+            + _L2_loss_mean(neg_t_embed)
             + _L2_loss_mean(r_embed)
-            + _L2_loss_mean(r_mul_pos_t)
-            + _L2_loss_mean(r_mul_neg_t)
         )
         loss = kg_loss + self.kg_l2loss_lambda * l2_loss
         return loss
@@ -119,11 +159,11 @@ class Embedding_based(nn.Module):
 
         # 4. 对 r_embed, r_mul_h, r_mul_t 进行 L2 归一化（按行）
         r_embed = torch.nn.functional.normalize(r_embed, p=2, dim=1)
-        r_mul_h = torch.nn.functional.normalize(r_mul_h, p=2, dim=1)
-        r_mul_t = torch.nn.functional.normalize(r_mul_t, p=2, dim=1)
+        # r_mul_h = torch.nn.functional.normalize(r_mul_h, p=2, dim=1)
+        # r_mul_t = torch.nn.functional.normalize(r_mul_t, p=2, dim=1)
 
         # 5. 根据 TransR 的打分函数计算距离：
-        score = torch.norm(r_mul_h + r_embed - r_mul_t, p=2, dim=1)         # (B,)
+        score = torch.sum(torch.pow(r_mul_h + r_embed - r_mul_t, 2), dim=1)         # (B,)
 
         return score
 
@@ -154,8 +194,8 @@ class Embedding_based(nn.Module):
         neg_t_embed = torch.nn.functional.normalize(neg_t_embed, p=2, dim=1)
 
         # 得分
-        pos_score = torch.norm(h_embed + r_embed - pos_t_embed, p=2, dim=1)                   # (B, 1)
-        neg_score = torch.norm(h_embed + r_embed - neg_t_embed, p=2, dim=1)                   # (B, 1)
+        pos_score = torch.sum(torch.pow(h_embed + r_embed - pos_t_embed, 2), dim=1)                   # (B, 1)
+        neg_score = torch.sum(torch.pow(h_embed + r_embed - neg_t_embed, 2), dim=1)                   # (B, 1)
 
         # BPR 风格 pairwise loss
         kg_loss = F.softplus(pos_score - neg_score)              # 基于pos_score，neg_score，补全BPR loss
@@ -193,7 +233,7 @@ class Embedding_based(nn.Module):
         t_embed = torch.nn.functional.normalize(t_embed, p=2, dim=1)        
 
         # 根据 TransE 的距离函数计算得分：|| h + r - t ||_2
-        score = torch.norm(h_embed + r_embed - t_embed, p=2, dim=1)                   # (B, 1)
+        score = torch.sum(torch.pow(h_embed + r_embed - t_embed, 2), dim=1)                   # (B, 1)
 
         return score
 
