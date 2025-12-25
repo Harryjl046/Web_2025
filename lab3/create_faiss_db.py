@@ -1,5 +1,6 @@
 import os
 import sys
+import torch
 # Set Hugging Face Mirror to avoid connection issues
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
@@ -23,8 +24,11 @@ def create_vector_db():
 
     # 2. Initialize Embeddings
     # Using moka-ai/m3e-base as requested for Chinese content
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     model_name = "moka-ai/m3e-base"
-    model_kwargs = {'device': 'cpu'}
+    model_kwargs = {'device': device}
     encode_kwargs = {'normalize_embeddings': False}
     
     print(f"Initializing HuggingFaceEmbeddings with model: {model_name}...")
