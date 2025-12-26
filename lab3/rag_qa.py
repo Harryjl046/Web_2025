@@ -1,6 +1,6 @@
 import os
 # 如果没有配置系统环境变量，请取消下面这行的注释并填入你的 Key
-os.environ['DASHSCOPE_API_KEY'] = 'sk-6a3bd421bfc24f2387f95fb1ae07a7bc'
+# os.environ['DASHSCOPE_API_KEY'] = 'sk-6a3bd421bfc24f2387f95fb1ae07a7bc'
 
 from retrieval import load_faiss_db, get_retriever
 
@@ -12,6 +12,29 @@ from langchain_core.output_parsers import StrOutputParser
 def format_docs(docs):
     """格式化检索到的文档"""
     return "\n\n".join(doc.page_content for doc in docs)
+
+# =========  非 RAG（纯 LLM） =========
+def build_no_rag_chain():
+    llm = ChatTongyi(model="qwen-plus")
+
+    prompt = ChatPromptTemplate.from_template(
+        """你是专业的法律知识问答助手，请直接回答用户问题。
+
+Question: {question}
+
+Answer:
+"""
+    )
+
+    chain = (
+        {"question": RunnablePassthrough()}
+        | prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    return chain
+
 
 def build_rag_chain(db):
     print("正在初始化 Qwen 模型和 RAG 链条...")
@@ -68,6 +91,8 @@ Answer:
 
 def main():
     db = load_faiss_db()
+
+    no_rag_chain = build_no_rag_chain()
     rag_chain = build_rag_chain(db)
 
     questions = [
@@ -79,6 +104,9 @@ def main():
     for q in questions:
         print("\n" + "=" * 80)
         print(f"Question: {q}")
+
+        print("\n[Non-RAG Answer]")
+        print(no_rag_chain.invoke(q))
 
         # 调用链
         result = rag_chain.invoke(q)
