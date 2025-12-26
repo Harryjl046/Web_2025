@@ -1,6 +1,7 @@
 import os
 # 如果没有配置系统环境变量，请取消下面这行的注释并填入你的 Key
-# os.environ['DASHSCOPE_API_KEY'] = 'sk-6a3bd421bfc24f2387f95fb1ae07a7bc'
+#os.environ['DASHSCOPE_API_KEY'] = 'sk-key'
+
 
 from retrieval import load_faiss_db, get_retriever
 
