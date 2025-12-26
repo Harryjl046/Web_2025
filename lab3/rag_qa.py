@@ -1,6 +1,6 @@
 import os
 # 如果没有配置系统环境变量，请取消下面这行的注释并填入你的 Key
-# os.environ['DASHSCOPE_API_KEY'] = 'your-api-key'
+os.environ['DASHSCOPE_API_KEY'] = 'sk-6a3bd421bfc24f2387f95fb1ae07a7bc'
 
 from retrieval import load_faiss_db, get_retriever
 
@@ -19,8 +19,13 @@ def build_rag_chain(db):
     llm = ChatTongyi(model="qwen-plus")
 
     prompt = ChatPromptTemplate.from_template(
-        """你是专业的法律知识问答助手。你需要使用以下检索到的上下文片段来回答问题，
-禁止根据常识和已知信息回答问题。如果你不知道答案，直接回答“未找到相关答案”。
+        """你是专业的法律知识问答助手。你需要**严格基于下面提供的上下文片段（Context）**回答问题。  
+- 你只能使用 Context 中包含的信息来回答，不允许根据常识、经验或其他法律知识补充内容。  
+- 如果 Context 中包含相关法律条文，优先引用条文回答；如果是问答类内容，在理解的基础上回答。  
+- 剔除上下文中无关信息，避免直接复述无关标题。  
+- 如果 Context 中完全没有相关信息，请只回答“未找到相关答案”。  
+- 不要在回答中提及“根据上下文”或类似措辞，Context 是隐式依据。。
+”。
 
 Question: {question}
 
@@ -77,6 +82,45 @@ def main():
             print(f"[Doc {i}]")
             print(doc.page_content)
             print("-" * 60)
+
+# def main():
+#     db = load_faiss_db()
+
+#     # ⚠️ retriever 要在 main 里单独拿出来
+#     retriever = get_retriever(db)
+
+#     rag_chain = build_rag_chain(db)
+
+#     questions = [
+#         "借款人去世后，继承人是否需要履行偿还义务？",
+#         "如何通过法律手段应对民间借贷纠纷？",
+#         "没有赡养老人就无法继承财产吗？"
+#     ]
+
+#     for q in questions:
+#         print("\n" + "=" * 80)
+#         print(f"Question: {q}")
+
+#         # ======== ① 先调试检索 ========
+#         docs = retriever.invoke(q)
+
+#         print(f"\n[DEBUG] Retrieved {len(docs)} documents")
+#         for i, d in enumerate(docs):
+#             print(f"\n--- Doc {i} ---")
+#             print(d.page_content[:1000])
+#         # ======== 调试结束 ========
+
+#         # ======== ② 再跑 RAG ========
+#         result = rag_chain.invoke(q)
+
+#         print("\nAnswer:")
+#         print(result["answer"])
+
+#         print("\nRetrieved Documents (from RAG context):")
+#         for i, doc in enumerate(result["context"], 1):
+#             print(f"[Doc {i}]")
+#             print(doc.page_content[:500])
+#             print("-" * 60)
 
 
 if __name__ == "__main__":
